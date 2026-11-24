@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://www.fdsc.co.tz/sitemap.xml
