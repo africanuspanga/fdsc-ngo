@@ -20,9 +20,9 @@ FIRM = {
     "phone_href": "+255786266441",
     "whatsapp": "255786266441",
     "po_box": "P.O. Box 105471, Dar es Salaam, Tanzania",
-    "office": "Victoria Noble Centre, Plot No. 89, Block 45B, Kinondoni, Dar es Salaam",
-    "office_short": "Victoria Noble Centre, Kinondoni",
-    "maps": "https://www.google.com/maps/search/?api=1&query=Victoria+Noble+Centre+Kinondoni+Dar+es+Salaam",
+    "office": "Natai Plaza, Coca-Cola Road, Dar es Salaam",          # as on the company business card
+    "office_short": "Natai Plaza, Coca-Cola Road",
+    "maps": "https://www.google.com/maps/search/?api=1&query=Natai+Plaza+Coca+Cola+Road+Dar+es+Salaam",
     "hours": "Monday to Friday, 08:30 - 17:00 EAT",
 }
 
@@ -323,13 +323,41 @@ def featured():
 
 
 STATS = {
-    "years": 2026 - FIRM["founded"],
+    "years": "10+",        # stays true in any year; founded 2014
     "assignments": len(ASSIGNMENTS),
     "clients": None,       # filled below
     "mainland": None,
 }
 STATS["clients"] = clients_count()
 STATS["mainland"] = mainland_count()
+
+# Questions shown on the Contact page (with FAQPage schema) and in llms.txt. Plain text only.
+FAQ = [
+    ("What does FDSC do?",
+     "FDSC is a Tanzanian development and management consultancy. We carry out evaluations, baseline studies "
+     "and research, build monitoring and evaluation (M&E) systems, run training and coaching, and give advisory "
+     "and technical assistance to government, development partners, foundations, NGOs and businesses."),
+    ("Where do you work?",
+     f"Across mainland Tanzania and Zanzibar. Since {FIRM['founded']} we have delivered assignments in "
+     f"{STATS['mainland']} of the 26 mainland regions, plus Unguja and Pemba. Our office is at Natai Plaza "
+     "on Coca-Cola Road, Dar es Salaam."),
+    ("Who have you worked for?",
+     f"{STATS['assignments']} assignments for {STATS['clients']} clients, including Solidaridad, Rikolto, HELVETAS, "
+     "The Nature Conservancy, Trias, the Hanns Seidel Foundation, the Ministry of Finance and Planning and the "
+     "Sugar Board of Tanzania. Five of them have hired us more than once."),
+    ("Which sectors do you know best?",
+     "Agriculture and agribusiness (coffee, tea, horticulture, rice and sugar value chains), governance and the "
+     "public sector, gender, youth and rights, and climate and natural resources."),
+    ("What kinds of assignments do you take on?",
+     "Baseline, mid-term and final evaluations, rapid appraisals, M&E frameworks and tools, gender analysis, "
+     "strategic and resource mobilisation plans, training for staff, boards, cooperatives and farmers, and "
+     "technical assistance to programmes."),
+    ("How do I request a proposal?",
+     f"Send us your terms of reference, or a short note on what you need, where and by when. Use the enquiry "
+     f"form, email {FIRM['email']} or WhatsApp {FIRM['phone']}. We reply within two working days."),
+]
+
+PRIVACY_UPDATED = "25 November 2026"   # change when the privacy notice text changes
 
 if __name__ == "__main__":
     print("assignments", len(ASSIGNMENTS), "clients", STATS["clients"], "mainland regions", STATS["mainland"])

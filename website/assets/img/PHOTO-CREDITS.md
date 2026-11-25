@@ -1,6 +1,6 @@
 # FDSC company profile: photo credits
 
-All files were downloaded on 24 Nov 2026 at 2400 px wide (JPEG). Every photo comes from Pexels or from Unsplash's free library. No Unsplash+ images were used.
+All files were downloaded at 2400 px wide (JPEG). Every photo comes from Pexels or from Unsplash's free library. No Unsplash+ images were used.
 
 - **Pexels License** (https://www.pexels.com/license/): free for commercial use, attribution not required, editing allowed. Do not sell the photo unaltered, and do not imply that people shown endorse FDSC.
 - **Unsplash License** (https://unsplash.com/license): free for commercial use, attribution not required. Do not sell the photo unaltered, and do not use it to build a competing photo service.

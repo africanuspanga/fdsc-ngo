@@ -28,3 +28,14 @@ Figures we derived from FDSC's own list (please confirm):
 8. **Contact details.** Which email should the website form send to: info@fdsc.co.tz or fdscltd@gmail.com? Are office hours Monday to Friday, 08:30-17:00? Any LinkedIn or other social media pages to link?
 9. **Registration details** (BRELA number, TIN) if they want them shown.
 10. **Reply promise.** The profile and site say "We reply within two working days". Is that right?
+
+## Added before launch (pre-launch checklist pass, 25 Nov 2026)
+
+See `PRE-LAUNCH-CHECKLIST.md` for the full record. New questions for FDSC:
+
+11. **Privacy notice.** We added a short privacy notice (`privacy.html`) describing how enquiries are handled under Tanzania's Personal Data Protection Act, 2022. Please read it and confirm it matches how you work.
+12. **Visitor statistics.** Do you want page-visit statistics? Vercel Web Analytics is ready to switch on; it uses no cookies, so no cookie banner is needed.
+13. **FAQ.** Six questions on the Contact page, written from the facts already on the site. Add or change any?
+14. **Online listings.** Do you have a Google Business Profile, LinkedIn or Facebook page? If not, we recommend claiming Google Business Profile first, with the same name, address and phone as the website.
+15. **Office address.** The website and profile now use the address on the company business card: **Natai Plaza, Coca-Cola Road, P.O. Box 105471, Dar es Salaam**. Both earlier profiles (April and October 2026) give **Victoria Noble Center, Plot No. 89, Block 45B, Kinondoni**. Please confirm which is current. If it is Victoria Noble Center, change `office` in `website/_src/content.py` and rebuild. Phone, emails, P.O. Box and website are the same on the card and in both profiles.
+16. **Logo tagline.** On the printed business card the swoosh tail stops above the tagline and "Development" is one word. Our redraw follows the small JPEG in the Word profile, where the tail cuts through and leaves a gap ("Develo pment"). Which version is the official one?

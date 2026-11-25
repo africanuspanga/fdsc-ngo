@@ -22,6 +22,8 @@ ICONS = {
     "check": '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
     "arrow": '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
     "arrow-up-right": '<path d="M7 17 17 7"/><path d="M8 7h9v9"/>',
+    "arrow-up": '<path d="M12 19V5"/><path d="m6 11 6-6 6 6"/>',
+    "copy": '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
     "phone": '<path d="M5 4h3.5l1.8 4.6-2.3 1.4a11 11 0 0 0 6 6l1.4-2.3L20 15.5V19a1.5 1.5 0 0 1-1.6 1.5A16 16 0 0 1 3.5 5.6 1.5 1.5 0 0 1 5 4z"/>',
     "mail": '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/>',
     "pin": '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',

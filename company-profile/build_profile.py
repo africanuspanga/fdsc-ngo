@@ -1,6 +1,6 @@
 """Builds the FDSC company profile (A4 portrait) from website/_src/content.py.
 
-Run:  python3 company-profile/build_profile.py            -> profile.html + FDSC-Company-Profile-2026.pdf
+Run:  python3 company-profile/build_profile.py            -> profile.html + FDSC-Company-Profile.pdf
       python3 company-profile/build_profile.py --preview  -> also PNG page previews in company-profile/previews/
 Needs Google Chrome and `pip install playwright segno`.
 """
@@ -15,9 +15,8 @@ import content as C  # noqa: E402
 from shared import icon, logo_svg, dot_map, qr_svg  # noqa: E402
 
 F = C.FIRM
-YEAR = "2026"
 OUT_HTML = os.path.join(HERE, "profile.html")
-OUT_PDF = os.path.join(HERE, "FDSC-Company-Profile-2026.pdf")
+OUT_PDF = os.path.join(HERE, "FDSC-Company-Profile.pdf")
 FONTS = "../website/assets/fonts/"
 PARTNERS = "../website/assets/partners/"
 
@@ -29,7 +28,7 @@ LOGO = logo_svg("fdsc-logo.svg", "logo")
 
 def run(kicker, n, dark=False):
     return (f'<div class="run"><span class="kick">{kicker}</span>{MARK_W if dark else MARK}</div>'
-            f'<div class="folio"><span>FDSC &middot; Company profile {YEAR}</span><span>{n:02d}</span></div>')
+            f'<div class="folio"><span>FDSC &middot; Company profile</span><span>{n:02d}</span></div>')
 
 
 CONTENTS = [("About FDSC", 3), ("Vision, mission and values", 4), ("Why partner with us", 5),
@@ -43,7 +42,7 @@ def p_cover():
   <img class="cover__img" src="img/hero-njombe.jpg" alt="">
   <div class="cover__shade"></div>
   <div class="cover__glow"></div>
-  <header class="cover__top">{LOGO_REV}<span class="cover__tag">Company profile {YEAR}</span></header>
+  <header class="cover__top">{LOGO_REV}<span class="cover__tag">Company profile</span></header>
   <div class="cover__body">
     <p class="eyebrow">Development and management consulting &middot; Since {F['founded']}</p>
     <h1>Turning strategy into <span class="hl">measurable results.</span></h1>
@@ -125,7 +124,7 @@ def p_why():
     rep = C.repeat_clients()
     mx = max(n for _, n in rep)
     bars = "".join(f'<div class="bar"><span class="bl">{c.replace(" East and Central Africa", "").replace(" Swiss Intercooperation", "").replace("Ministry of Finance and Planning", "Ministry of Finance &amp; Planning")}</span>'
-                   f'<span class="bt"><i style="width:{n / mx * 100:.0f}%"></i></span><span class="bv">{n}</span></div>' for c, n in rep)
+                   f'<span class="bv">{n}</span><span class="bt"><i style="width:{n / mx * 100:.0f}%"></i></span></div>' for c, n in rep)
     total = sum(n for _, n in rep)
     return f"""<section class="page light">
   {run('03 &middot; Why partner with us', 5)}
@@ -137,8 +136,9 @@ def p_why():
         <span class="label">Clients who come back</span>
         <p class="chart__note">Five organisations account for <b>{total} of our {C.STATS['assignments']}</b> assignments.</p>
         {bars}
-        <p class="chart__foot">Number of assignments per client, 2014&ndash;{YEAR}</p>
+        <p class="chart__foot">Number of assignments per client since {F['founded']}</p>
       </div>
+      <figure class="why__img"><img src="img/field-discussion.jpg" alt=""><figcaption>Qualitative fieldwork</figcaption></figure>
     </div>
     <ol class="reasons">{items}</ol>
   </div>
@@ -150,7 +150,8 @@ def p_services():
     for s in C.SERVICES:
         pts = "".join(f"<li>{p}</li>" for p in s["points"][:3])
         cards += (f'<article class="svc glass"><div class="svc__hd"><span class="svc__ic">{icon(s["icon"])}</span>'
-                  f'<h3>{s["title"]}</h3></div><p>{s["short"]}</p><ul>{pts}</ul></article>')
+                  f'<span class="svc__n">{C.SERVICES.index(s) + 1:02d}</span><h3>{s["title"]}</h3></div>'
+                  f'<p>{s["short"]}</p><ul>{pts}</ul></article>')
     return f"""<section class="page light">
   {run('04 &middot; Our services', 6)}
   <div class="head-row">
@@ -179,7 +180,7 @@ def p_map():
     regions = sorted({r for a in C.ASSIGNMENTS for r in a["regions"] if r not in C.ZANZIBAR} | {"Songwe"})
     by = C.by_type()
     mx = max(n for _, n in by)
-    bars = "".join(f'<div class="bar"><span class="bl">{t}</span><span class="bt"><i style="width:{n / mx * 100:.0f}%"></i></span><span class="bv">{n}</span></div>' for t, n in by)
+    bars = "".join(f'<div class="bar"><span class="bl">{t}</span><span class="bv">{n}</span><span class="bt"><i style="width:{n / mx * 100:.0f}%"></i></span></div>' for t, n in by)
     m = dot_map(C.worked_regions(), step=8.2, dot=5.0, cls="tzmap", cities=["Mwanza", "Arusha", "Kigoma", "Dodoma", "Dar es Salaam", "Mbeya"])
     return f"""<section class="page light">
   {run('06 &middot; Where we work', 8)}
@@ -198,6 +199,7 @@ def p_map():
     </div>
   </div>
   <div class="zones">{''.join(f'<div class="zone glass"><b>{z["name"]}</b><span>{z["regions"]}</span><p>{z["text"]}</p></div>' for z in C.ZONES)}</div>
+  <p class="regions"><b>Mainland regions reached ({len(regions)}):</b> {", ".join(regions)}. <b>Zanzibar:</b> Unguja and Pemba.</p>
 </section>"""
 
 
@@ -206,7 +208,7 @@ def p_featured():
     for f in C.featured():
         a = f["a"]
         cards += (f'<article class="feat"><div class="feat__img"><img src="img/{f["img"]}.jpg" alt=""><span class="tag">{f["label"]}</span></div>'
-                  f'<div class="feat__b"><h3>{f["headline"]}</h3><p>{f["summary"]}</p>'
+                  f'<div class="feat__b"><h3>{f["headline"].replace("AGRI-CONNECT", '<span class="nw">AGRI-CONNECT</span>')}</h3><p>{f["summary"]}</p>'
                   f'<div class="meta"><span>{a["client"].split(" (")[0]}</span><span>{a["where"]}</span></div></div></article>')
     return f"""<section class="page dark">
   <div class="dots-bg"></div>
@@ -225,7 +227,7 @@ def record_rows(items):
         donor = ' <span class="eu">EU-funded</span>' if a.get("donor") == "EU" else ""
         out += (f'<tr><td class="per">{a["period"].replace(" - ", "&ndash;")}</td>'
                 f'<td class="cl">{a["client"]}</td>'
-                f'<td class="as"><b>{a["title"]}</b><span>{a["where"]}{donor}</span></td>'
+                f'<td class="as"><b>{a["title"].replace("TASP II", "TASP&nbsp;II")}</b><span>{a["where"]}{donor}</span></td>'
                 f'<td class="ty"><span class="pill t-{a["type"]}">{C.TYPES_SHORT[a["type"]]}</span></td></tr>')
     return out
 
@@ -297,6 +299,8 @@ body{font-family:'Instrument Sans',system-ui,sans-serif;font-size:9.2pt;line-hei
 .page:last-child{page-break-after:auto}
 @media screen{.page{margin:10mm auto;box-shadow:0 10px 40px rgba(0,0,0,.35)}}
 h1,h2,h3,.big,.statement,.n,.label,.kick,.eyebrow{font-family:'Space Grotesk',sans-serif}
+h1,h2,h3{text-wrap:balance}
+p,li{text-wrap:pretty}
 .light{background:radial-gradient(90% 55% at 100% 0%,rgba(194,60,71,.07),transparent 62%),radial-gradient(70% 40% at 0% 100%,rgba(194,60,71,.04),transparent 60%),#fff}
 .dark{color:#fff;background:radial-gradient(110% 70% at 100% 105%,rgba(255,255,255,.16),transparent 60%),radial-gradient(80% 50% at 0% -5%,rgba(110,24,34,.35),transparent 62%),linear-gradient(160deg,var(--red),var(--red-800))}
 .dots-bg{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.2) .55px,transparent .7px);background-size:3.2mm 3.2mm;
@@ -313,6 +317,7 @@ h1,h2,h3,.big,.statement,.n,.label,.kick,.eyebrow{font-family:'Space Grotesk',sa
 /* type */
 .h-hero{font-size:40pt;line-height:1.02;font-weight:400;letter-spacing:-.02em;color:#fff}
 .h-xl{font-size:27pt;line-height:1.08;font-weight:400;letter-spacing:-.018em;max-width:150mm}
+.h-xl + .lead{margin-top:5mm}
 .h-lg{font-size:19pt;font-weight:400;letter-spacing:-.01em}
 .h-sm{font-size:10.5pt;font-weight:600;letter-spacing:-.005em;margin-bottom:4mm}
 .h-xs{font-size:8.6pt;font-weight:600;margin-bottom:3mm}
@@ -349,10 +354,11 @@ h1,h2,h3,.big,.statement,.n,.label,.kick,.eyebrow{font-family:'Space Grotesk',sa
 .statement{font-size:19pt;line-height:1.28;font-weight:400;letter-spacing:-.012em;max-width:168mm;margin-bottom:14mm}
 .two{display:grid;grid-template-columns:1fr 70mm;gap:12mm}
 .toc{list-style:none;border-top:.3mm solid var(--line)}
-.toc li{display:grid;grid-template-columns:10mm 1fr auto;align-items:baseline;padding:3.2mm 0;border-bottom:.3mm solid var(--line);font-size:10.5pt}
+.toc li{display:grid;grid-template-columns:10mm 1fr auto;align-items:baseline;padding:4.4mm 0;border-bottom:.3mm solid var(--line);font-size:10.5pt}
 .toc .n{font-size:8pt;color:var(--red);font-weight:600}
 .toc .pg{font-family:'Space Grotesk';font-size:9pt;color:var(--muted)}
-.glance .stat{padding:4mm 0 4.4mm;border-top:.3mm solid var(--line);display:block}
+.glance{display:flex;flex-direction:column}
+.glance .stat{padding:4mm 0 4.4mm;border-top:.3mm solid var(--line);display:block;flex:1}
 .glance .stat:last-child{border-bottom:.3mm solid var(--line)}
 .big{display:block;font-size:34pt;line-height:1;font-weight:300;letter-spacing:-.03em;color:var(--ink)}
 .big small{font-size:12pt;letter-spacing:0;margin-left:1.2mm;color:var(--muted);font-weight:400}
@@ -364,9 +370,8 @@ h1,h2,h3,.big,.statement,.n,.label,.kick,.eyebrow{font-family:'Space Grotesk',sa
 .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin-top:6mm;border-top:.3mm solid var(--line);padding-top:4mm}
 .facts span{display:block;font-size:6.8pt;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Space Grotesk';font-weight:600}
 .facts b{font-weight:600;font-size:8.6pt}
-.about__img{position:relative;height:126mm;border-radius:3mm;overflow:hidden}
-
-.about__img img{width:100%;height:100%;object-fit:cover;object-position:40% center}
+.about__img{position:relative;min-height:100mm;border-radius:3mm;overflow:hidden}
+.about__img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:40% center}
 figcaption{position:absolute;left:3mm;bottom:3mm;font-size:6pt;color:#fff;background:rgba(20,20,20,.55);padding:.8mm 2mm;border-radius:1mm}
 .who{margin-top:9mm;padding:6mm 7mm}
 .chips{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:2.6mm 5mm}
@@ -383,33 +388,41 @@ figcaption{position:absolute;left:3mm;bottom:3mm;font-size:6pt;color:#fff;backgr
 .values p{color:rgba(255,255,255,.9);font-size:9.8pt}
 /* why */
 .why{display:grid;grid-template-columns:78mm 1fr;gap:10mm}
+.why__l{display:flex;flex-direction:column}
+.why__img{position:relative;flex:1;min-height:40mm;margin-top:5mm;border-radius:3mm;overflow:hidden}
+.why__img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%}
 .why .lead{margin:6mm 0 8mm;font-size:9.8pt}
 .chart{padding:6mm}
 .chart__note{font-size:8.6pt;margin:2.5mm 0 4mm;color:var(--ink)}
 .chart__foot{font-size:6.6pt;color:var(--muted);margin-top:3mm}
-.bar{display:grid;grid-template-columns:30mm 1fr 6mm;align-items:center;gap:2.5mm;margin:2.4mm 0;font-size:7.8pt}
+.bar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:1.2mm 3mm;margin:3mm 0;font-size:7.8pt}
+.bar .bt{grid-column:1/-1}
 .bt{height:2.6mm;background:#F1EBEB;border-radius:2mm;overflow:hidden}
 .bt i{display:block;height:100%;background:linear-gradient(90deg,var(--red-200),#E58A93);border-radius:2mm}
 .bar:first-of-type .bt i{background:linear-gradient(90deg,var(--red-800),var(--red))}
 .bv{font-family:'Space Grotesk';font-weight:600;text-align:right}
 .reasons{list-style:none;border-top:.3mm solid var(--line)}
-.reasons li{display:grid;grid-template-columns:11mm 1fr;padding:4.4mm 0;border-bottom:.3mm solid var(--line)}
-.reasons .n{font-size:8.2pt;color:var(--red);font-weight:600;padding-top:.6mm}
-.reasons b{font-family:'Space Grotesk';font-size:11.4pt;font-weight:500;display:block;margin-bottom:1mm}
-.reasons p{color:var(--muted);font-size:8.8pt}
+.nw{white-space:nowrap}
+.reasons li{display:grid;grid-template-columns:11mm 1fr;padding:7mm 0;border-bottom:.3mm solid var(--line)}
+.reasons .n{font-size:8.4pt;color:var(--red);font-weight:600;padding-top:.8mm}
+.reasons b{font-family:'Space Grotesk';font-size:12.2pt;font-weight:500;display:block;margin-bottom:1.2mm}
+.reasons p{color:var(--muted);font-size:9.3pt}
 /* services */
 .head-row{display:grid;grid-template-columns:1fr 84mm;gap:8mm;align-items:end;margin-bottom:7mm}
 .head-row .lead{font-size:9pt}
-.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;margin-top:2mm}
-.svc{padding:5mm 5mm 5.2mm;display:flex;flex-direction:column}
-.svc__hd{display:grid;grid-template-columns:9mm 1fr;gap:3mm;align-items:center;margin-bottom:3mm;min-height:10mm}
-.svc__ic{width:9mm;height:9mm;border-radius:2.2mm;display:grid;place-items:center;background:var(--red-50);border:.3mm solid rgba(194,60,71,.18);color:var(--red)}
-.svc__ic .ic{width:5mm;height:5mm}
-.svc h3{font-size:9.8pt;font-weight:600;line-height:1.22;letter-spacing:-.005em}
-.svc p{font-size:8pt;color:var(--muted);line-height:1.45;margin-bottom:3.5mm}
-.svc ul{list-style:none;margin-top:auto;border-top:.3mm solid var(--line);padding-top:2.6mm}
-.svc li{font-size:7.5pt;line-height:1.35;padding:.7mm 0 .7mm 3.4mm;position:relative}
-.svc li::before{content:"";position:absolute;left:0;top:2.1mm;width:1.4mm;height:1.4mm;border-radius:50%;background:var(--red)}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);column-gap:4mm;row-gap:0}
+.head-row + .svc-grid{margin-top:-1.5mm}
+.svc{padding:4.2mm 4.6mm 4mm;display:grid;grid-row:span 3;grid-template-rows:subgrid;row-gap:0;margin-bottom:3.6mm}
+.svc__hd{display:grid;grid-template-columns:8mm 1fr;gap:2mm;align-content:start;margin-bottom:2mm}
+.svc__n{justify-self:end;font-family:'Space Grotesk';font-size:7.4pt;font-weight:500;color:var(--muted)}
+.svc__hd h3{grid-column:1/-1}
+.svc__ic{width:8mm;height:8mm;border-radius:2mm;display:grid;place-items:center;background:var(--red-50);border:.3mm solid rgba(194,60,71,.18);color:var(--red)}
+.svc__ic .ic{width:4.6mm;height:4.6mm}
+.svc h3{font-size:10pt;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+.svc p{font-size:7.8pt;color:var(--muted);line-height:1.4;margin-bottom:2.6mm}
+.svc ul{list-style:none;align-self:start;border-top:.3mm solid var(--line);padding-top:2.2mm}
+.svc li{font-size:7.4pt;line-height:1.32;padding:.5mm 0 .5mm 3.4mm;position:relative}
+.svc li::before{content:"";position:absolute;left:0;top:1.9mm;width:1.4mm;height:1.4mm;border-radius:50%;background:var(--red)}
 /* sectors */
 .sectors{display:grid;grid-template-columns:1fr 1fr;gap:4.5mm;margin:9mm 0 10mm}
 .sector{border-radius:3mm;overflow:hidden;background:#fff;color:var(--ink)}
@@ -418,13 +431,13 @@ figcaption{position:absolute;left:3mm;bottom:3mm;font-size:6pt;color:#fff;backgr
 .sector h3{font-size:11.6pt;font-weight:500;color:var(--ink);margin-bottom:1.6mm}
 .sector p{font-size:8.2pt;color:var(--muted);line-height:1.45}
 .steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:5mm;position:relative;padding-top:2mm}
-.steps::before{content:"";position:absolute;left:4mm;right:4mm;top:6mm;height:.4mm;background:rgba(255,255,255,.55)}
+.steps::before{content:"";position:absolute;left:4mm;right:calc((100% - 15mm) / 4 - 4mm);top:6mm;height:.4mm;background:rgba(255,255,255,.55)}
 .steps .dot{position:relative;display:grid;place-items:center;width:8mm;height:8mm;border-radius:50%;background:var(--red-800);border:.4mm solid rgba(255,255,255,.7);font-family:'Space Grotesk';font-size:8pt;font-weight:600;color:#fff;margin-bottom:3.6mm}
 .steps li:first-child .dot{border-color:#fff;background:#fff;color:var(--red)}
 .steps b{font-family:'Space Grotesk';font-size:11pt;font-weight:500;color:#fff;display:block;margin-bottom:1.2mm}
 .steps p{font-size:8pt;color:rgba(255,255,255,.9);line-height:1.45}
 /* map */
-.mapwrap{display:grid;grid-template-columns:1fr 62mm;gap:6mm;margin-top:8mm}
+.mapwrap{display:grid;grid-template-columns:1fr 62mm;gap:6mm;margin-top:6mm}
 .tzmap{width:100%;height:auto;display:block}
 .tzmap .dots{fill:none;stroke-linecap:round}
 .tzmap .dots.off{stroke:#E2DCDC}
@@ -440,18 +453,18 @@ figcaption{position:absolute;left:3mm;bottom:3mm;font-size:6pt;color:#fff;backgr
 .map__side .stat{padding:3mm 0 4mm;border-bottom:.3mm solid var(--line)}
 .map__side .stat:first-child{border-top:.3mm solid var(--line)}
 .map__side .chart{margin-top:6mm;padding:5mm}
-.map__side .bar{grid-template-columns:24mm 1fr 5mm;font-size:7.2pt;margin:2.6mm 0}
+.map__side .bar{font-size:7.4pt;margin:2.6mm 0}
 .map__side .bar:first-of-type .bt i{background:linear-gradient(90deg,var(--red-800),var(--red))}
-.zones{display:grid;grid-template-columns:repeat(4,1fr);gap:3.5mm;margin-top:8mm}
-.zone{padding:4.6mm 4.4mm}
-.zone b{display:block;font-family:'Space Grotesk';font-weight:600;font-size:9.6pt;margin-bottom:1mm}
-.zone span{display:block;font-size:6.8pt;color:var(--red);font-weight:600;line-height:1.35;margin-bottom:2.2mm}
-.zone p{font-size:7.6pt;color:var(--muted);line-height:1.42}
-.regions{margin-top:7mm;font-size:7.8pt;color:var(--muted);line-height:1.6;border-top:.3mm solid var(--line);padding-top:4mm}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:3.2mm;margin-top:6mm}
+.zone{padding:3.8mm 5mm}
+.zone b{display:block;font-family:'Space Grotesk';font-weight:600;font-size:10.4pt;margin-bottom:1mm}
+.zone span{display:block;font-size:7.4pt;color:var(--red);font-weight:600;line-height:1.35;margin-bottom:2mm}
+.zone p{font-size:8pt;color:var(--muted);line-height:1.42}
+.regions{margin-top:5mm;font-size:7.6pt;color:var(--muted);line-height:1.55;border-top:.3mm solid var(--line);padding-top:3mm}
 .regions b{color:var(--ink)}
 /* featured */
 .feats{display:grid;grid-template-columns:1fr 1fr;gap:4.5mm}
-.feat{display:grid;grid-template-columns:36mm 1fr;border-radius:3mm;overflow:hidden;background:#fff;height:62mm}
+.feat{display:grid;grid-template-columns:38mm 1fr;border-radius:3mm;overflow:hidden;background:#fff;height:68mm}
 .feat__img{position:relative}
 .feat__img img{width:100%;height:100%;object-fit:cover;display:block}
 .tag{position:absolute;left:2.5mm;top:2.5mm;font-size:6pt;font-weight:600;letter-spacing:.06em;color:#fff;background:var(--red);border:.25mm solid rgba(255,255,255,.4);padding:.8mm 2mm;border-radius:5mm}
@@ -466,8 +479,8 @@ figcaption{position:absolute;left:3mm;bottom:3mm;font-size:6pt;color:#fff;backgr
 .rec{width:100%;border-collapse:collapse;font-size:7.5pt}
 .rec th{text-align:left;font-family:'Space Grotesk';font-size:6.6pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:0 2.5mm 2.4mm 0;border-bottom:.4mm solid var(--red)}
 .rec td{padding:1.9mm 2.5mm 1.9mm 0;border-bottom:.3mm solid var(--line);vertical-align:top;line-height:1.38}
-.rec .per{width:23mm;font-family:'Space Grotesk';font-weight:500;white-space:nowrap;font-size:7.4pt}
-.rec .cl{width:33mm;font-weight:600;font-size:7.3pt}
+.rec .per{width:26mm;font-family:'Space Grotesk';font-weight:500;white-space:nowrap;font-size:7.4pt}
+.rec .cl{width:32mm;font-weight:600;font-size:7.3pt}
 .rec .as b{font-weight:500;display:block}
 .rec .as span{display:block;color:var(--muted);font-size:6.8pt;margin-top:.3mm}
 .rec .ty{width:25mm;padding-right:0}
@@ -477,17 +490,17 @@ figcaption{position:absolute;left:3mm;bottom:3mm;font-size:6pt;color:#fff;backgr
 .pill{background:var(--red-50);color:var(--red-800)}.t-eval{background:var(--red);color:#fff}
 /* clients */
 .logos{display:grid;grid-template-columns:repeat(4,1fr);gap:3.5mm;margin-top:9mm}
-.lg{height:30mm;background:#fff;border-radius:2.6mm;display:grid;place-items:center;padding:4mm 5mm}
-.lg img{max-width:100%;max-height:20mm;object-fit:contain}
+.lg{height:33mm;background:#fff;border-radius:2.6mm;display:grid;place-items:center;padding:4mm 5mm}
+.lg img{max-width:100%;max-height:22mm;object-fit:contain}
 .lg--note{grid-column:span 3;background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.06));border:.3mm solid rgba(255,255,255,.3);box-shadow:none;place-items:start;align-content:center;padding:5mm 7mm}
 .lg--note p{font-size:9.4pt;color:rgba(255,255,255,.92);margin-top:2mm;line-height:1.5}
 .lg--note b{color:#fff;font-weight:600}
 /* back */
 .back__img{position:absolute;left:0;right:0;bottom:0;height:36%;width:100%;object-fit:cover}
-.back__shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 72%,rgba(20,20,20,.55) 100%)}
+.back__shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 64%,rgba(20,20,20,.18) 76%,rgba(20,20,20,.68) 100%)}
 .back__body{margin-top:14mm}
 .back__body .lead{margin:7mm 0 10mm;font-size:11pt;max-width:125mm}
-.contact{display:grid;grid-template-columns:1fr 1fr;gap:4mm;max-width:150mm}
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
 .contact .glass-d{padding:5mm 5.5mm}
 .contact p{font-size:10pt;color:#fff;margin-top:2mm;line-height:1.45}
 .qrbox{display:flex;gap:4mm;align-items:center}
@@ -504,7 +517,7 @@ def build():
     pages = [p_cover(), p_contents(), p_about(), p_values(), p_why(), p_services(), p_sectors(), p_map(),
              p_featured(), p_record(1), p_record(2), p_clients(), p_back()]
     html = f"""<!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-<title>FDSC Company Profile {YEAR}</title><style>{CSS}</style></head><body>
+<title>FDSC Company Profile</title><style>{CSS}</style></head><body>
 {''.join(pages)}
 </body></html>"""
     open(OUT_HTML, "w").write(html)

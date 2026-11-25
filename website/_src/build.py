@@ -1,12 +1,15 @@
 """Builds the FDSC static website from content.py.
 
 Run:  python3 website/_src/build.py
-Writes index.html, about.html, services.html, work.html, contact.html, 404.html, sitemap.xml, robots.txt
-and copies brand files into website/assets/brand/. Upload everything in website/ except _src/.
+Writes index.html, about.html, services.html, work.html, contact.html, privacy.html, 404.html, sitemap.xml,
+robots.txt, llms.txt and llms-full.txt, and copies brand files into website/assets/brand/.
+Upload everything in website/ except _src/.
 """
+import datetime
 import html
 import json
 import os
+import re
 import shutil
 import sys
 
@@ -21,11 +24,20 @@ from shared import icon, dot_map  # noqa: E402
 
 F = C.FIRM
 IMG = os.path.join(SITE, "assets", "img")
-VER = "3"  # bump to bust caches of css/js
-PDF = "assets/docs/FDSC-Company-Profile-2026.pdf"
+VER = "4"  # bump to bust caches of css/js
+PDF = "assets/docs/FDSC-Company-Profile.pdf"
 NAV = [("index.html", "Home"), ("about.html", "About"), ("services.html", "Services"),
        ("work.html", "Our work"), ("contact.html", "Contact")]
+TODAY = datetime.date.today()
+# Vercel Web Analytics (cookieless, so no consent banner needed). Turn on Analytics for the project in the
+# Vercel dashboard first, then set this to True and rebuild. Off, the pages load no analytics script at all.
+ANALYTICS = False
 e = html.escape
+
+
+def plain(s):
+    """Content strings carry a little HTML (entities, <span>); strip it for meta tags, JSON-LD and llms.txt."""
+    return html.unescape(re.sub(r"<[^>]+>", "", s))
 
 
 # ---- helpers -------------------------------------------------------------------------------
@@ -37,15 +49,27 @@ def pic(slug, alt, sizes="(max-width: 700px) 100vw, 50vw", cls="", eager=False, 
             f'{base}assets/img/{slug}-1600.webp 1600w" sizes="{sizes}" width="{w}" height="{h}" alt="{e(alt)}" {load}>')
 
 
-def head(title, desc, path, base=""):
+def head(title, desc, path, base="", crumb=None, extra_ld=None, index=True):
     url = F["url"] + "/" + ("" if path == "index.html" else path)
-    ld = {"@context": "https://schema.org", "@type": "ProfessionalService", "name": F["name"],
-          "alternateName": "FDSC", "url": F["url"], "logo": F["url"] + "/assets/brand/fdsc-logo.svg",
-          "image": F["url"] + "/assets/brand/og-image.jpg", "email": F["email"], "telephone": F["phone"],
-          "foundingDate": str(F["founded"]), "description": C.INTRO,
-          "address": {"@type": "PostalAddress", "streetAddress": "Victoria Noble Centre, Plot No. 89, Block 45B, Kinondoni",
-                      "postOfficeBoxNumber": "105471", "addressLocality": "Dar es Salaam", "addressCountry": "TZ"},
-          "areaServed": ["Tanzania", "Zanzibar", "East Africa"]}
+    org = {"@type": "ProfessionalService", "@id": F["url"] + "/#org", "name": F["name"],
+           "alternateName": "FDSC", "url": F["url"] + "/", "logo": F["url"] + "/assets/brand/fdsc-logo.svg",
+           "image": F["url"] + "/assets/brand/og-image.jpg", "email": F["email"], "telephone": F["phone"],
+           "foundingDate": str(F["founded"]), "description": C.INTRO, "slogan": C.HEADLINE,
+           "address": {"@type": "PostalAddress", "streetAddress": F["office_short"],
+                       "postOfficeBoxNumber": "105471", "addressLocality": "Dar es Salaam", "addressCountry": "TZ"},
+           "openingHours": "Mo-Fr 08:30-17:00", "hasMap": F["maps"],
+           "areaServed": [{"@type": "Country", "name": "Tanzania"}, {"@type": "Place", "name": "Zanzibar"}],
+           "knowsAbout": [plain(s["title"]) for s in C.SERVICES]}
+    graph = [org, {"@type": "WebSite", "@id": F["url"] + "/#site", "url": F["url"] + "/", "name": "FDSC",
+                   "publisher": {"@id": F["url"] + "/#org"}, "inLanguage": "en-GB"}]
+    if crumb:
+        graph.append({"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": F["url"] + "/"},
+            {"@type": "ListItem", "position": 2, "name": crumb, "item": url}]})
+    graph += extra_ld or []
+    ld = json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False).replace("</", "<\\/")
+    canon = f'<link rel="canonical" href="{url}">' if index else '<meta name="robots" content="noindex">'
+    va = '\n<script src="/_vercel/insights/script.js" defer></script>' if ANALYTICS else ""
     return f"""<!doctype html>
 <html lang="en-GB">
 <head>
@@ -53,14 +77,21 @@ def head(title, desc, path, base=""):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(title)}</title>
 <meta name="description" content="{e(desc)}">
-<link rel="canonical" href="{url}">
+{canon}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="FDSC">
+<meta property="og:locale" content="en_GB">
 <meta property="og:title" content="{e(title)}">
 <meta property="og:description" content="{e(desc)}">
 <meta property="og:url" content="{url}">
 <meta property="og:image" content="{F['url']}/assets/brand/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FDSC logo, the line &ldquo;{e(C.HEADLINE)}&rdquo; and a dot map of Tanzania">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{e(title)}">
+<meta name="twitter:description" content="{e(desc)}">
+<meta name="twitter:image" content="{F['url']}/assets/brand/og-image.jpg">
 <meta name="theme-color" content="#C23C47">
 <link rel="icon" href="{base}favicon.ico" sizes="48x48">
 <link rel="icon" href="{base}assets/brand/fdsc-favicon.svg" type="image/svg+xml">
@@ -69,8 +100,8 @@ def head(title, desc, path, base=""):
 <link rel="preload" href="{base}assets/fonts/SpaceGrotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="{base}assets/fonts/InstrumentSans-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{base}assets/fonts/fonts.css">
-<link rel="stylesheet" href="{base}assets/css/site.css?v={VER}">
-<script type="application/ld+json">{json.dumps(ld)}</script>
+<link rel="stylesheet" href="{base}assets/css/site.css?v={VER}">{va}
+<script type="application/ld+json">{ld}</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -80,11 +111,12 @@ def head(title, desc, path, base=""):
 def header(path, base=""):
     links = "".join(f'<a href="{base}{h}"{" aria-current=\"page\"" if h == path else ""}>{t}</a>' for h, t in NAV)
     mlinks = "".join(f'<a href="{base}{h}"{" aria-current=\"page\"" if h == path else ""}>{t}{icon("arrow")}</a>' for h, t in NAV)
+    here = " top__cta--here" if path == "contact.html" else ""
     return f"""<header class="top">
   <div class="wrap top__in">
     <a class="brand" href="{base}index.html" aria-label="FDSC home"><img class="logo" src="{base}assets/brand/fdsc-wordmark.svg" width="188" height="100" alt="FDSC"></a>
     <nav class="nav" aria-label="Main">{links}</nav>
-    <div class="top__cta"><a class="btn btn--red" href="{base}contact.html">Request a proposal{icon('arrow')}</a></div>
+    <div class="top__cta{here}"><a class="btn btn--red" href="{base}contact.html"><span class="top__lg">Request a proposal</span><span class="top__sm">Contact us</span>{icon('arrow')}</a></div>
     <button class="menu-btn" type="button" aria-expanded="false" aria-controls="mnav" aria-label="Menu">
       <span class="i-open">{icon('menu')}</span><span class="i-close" hidden>{icon('close')}</span></button>
   </div>
@@ -113,18 +145,19 @@ def footer(base=""):
         <p>Pragmatic, innovative and sustainable development consulting. Dar es Salaam, Tanzania, since {F['founded']}.</p>
         <a class="foot__dl" href="{base}{PDF}" download>{icon('download')}Company profile (PDF)</a>
       </div>
-      <div><h3>Explore</h3><ul>{nav}</ul></div>
-      <div><h3>Services</h3><ul>{svc}</ul></div>
-      <div class="foot__c"><h3>Contact</h3><ul>
+      <div><h2>Explore</h2><ul>{nav}</ul></div>
+      <div><h2>Services</h2><ul>{svc}</ul></div>
+      <div class="foot__c"><h2>Contact</h2><ul>
         <li>{icon('pin')}<span>{F['office']}<br>{F['po_box']}</span></li>
         <li>{icon('phone')}<a href="tel:{F['phone_href']}">{F['phone']}</a></li>
         <li>{icon('mail')}<span><a href="mailto:{F['email']}">{F['email']}</a><br><a href="mailto:{F['email_alt']}">{F['email_alt']}</a></span></li>
       </ul></div>
     </div>
-    <div class="foot__bar"><span>&copy; <span id="year">2026</span> {F['name']}. All rights reserved.</span><span>{F['registration']}</span></div>
+    <div class="foot__bar"><span>&copy; <span id="year">{TODAY.year}</span> {F['name']}. All rights reserved.</span><span>{F['registration']} &middot; <a href="{base}privacy.html">Privacy notice</a></span></div>
   </div>
 </footer>
-<a class="wa" href="https://wa.me/{F['whatsapp']}" target="_blank" rel="noopener" aria-label="Chat with FDSC on WhatsApp"><img src="{base}assets/img/whatsapp-112.png" width="56" height="56" alt=""></a>
+<button class="totop" type="button" aria-label="Back to top">{icon('arrow-up')}</button>
+<a class="wa" href="https://wa.me/{F['whatsapp']}" target="_blank" rel="noopener" aria-label="Chat with FDSC on WhatsApp (opens in a new tab)"><img src="{base}assets/img/whatsapp-112.png" width="56" height="56" alt=""></a>
 <script src="{base}assets/js/site.js?v={VER}" defer></script>
 </body>
 </html>
@@ -149,7 +182,7 @@ def phead(crumb, title, lead):
     return f"""<section class="phead">
   <img class="phead__mark" src="assets/brand/fdsc-mark.svg" alt="" width="420" height="480">
   <div class="wrap">
-    <p class="crumbs"><a href="index.html">Home</a> / {crumb}</p>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> / <span aria-current="page">{crumb}</span></nav>
     <h1 class="h1">{title}</h1>
     <p class="lead">{lead}</p>
   </div>
@@ -313,8 +346,8 @@ def page_home():
 
 {cta()}
 """
-    return (head(f"FDSC | Development consulting in Tanzania: evaluation, research and capacity building",
-                 "Frontline Development Services Consulting (FDSC) is a Tanzanian consultancy delivering evaluations, baseline studies, M&E systems, gender analysis and capacity building since 2014.",
+    return (head("FDSC | Development consulting and evaluation in Tanzania",
+                 f"Tanzanian consultancy delivering evaluations, baseline studies, M&E systems, gender analysis and capacity building for government, donors and NGOs since {F['founded']}.",
                  "index.html") + header("index.html") + body + footer())
 
 
@@ -378,9 +411,9 @@ def page_about():
 {cta()}
 """
     body = body.replace('<ul class="checks" style="margin:0">', '<ul class="checks aud" style="margin:0">')
-    return (head("About FDSC | Frontline Development Services Consulting, Tanzania",
+    return (head("About FDSC | Development consultancy in Dar es Salaam",
                  "Founded in 2014 in Dar es Salaam, FDSC provides development and management consulting to government, development partners, NGOs and business across Tanzania.",
-                 "about.html") + header("about.html") + body + footer())
+                 "about.html", crumb="About") + header("about.html") + body + footer())
 
 
 def page_services():
@@ -388,7 +421,7 @@ def page_services():
     for i, s in enumerate(C.SERVICES):
         pts = "".join(f"<li>{icon('check')}<span>{p}</span></li>" for p in s["points"])
         det += (f'<article class="svc-detail rv" id="{s["slug"]}"><span class="card__ic card__ic--soft">{icon(s["icon"])}</span>'
-                f'<div><h3>{s["title"]}</h3><p>{s["short"]}</p></div><ul>{pts}</ul></article>')
+                f'<div><h2>{s["title"]}</h2><p>{s["short"]}</p></div><ul>{pts}</ul></article>')
     secs = "".join(f'<article class="sector rv">{pic(x["img"], x["title"], sizes="(max-width: 700px) 100vw, 25vw")}<div><h3>{x["title"]}</h3><p>{x["text"]}</p></div></article>' for x in C.SECTORS)
     steps = "".join(f'<li class="rv"><span class="dot">{i + 1}</span><b>{t}</b><p>{d}</p></li>' for i, (t, d) in enumerate(C.APPROACH))
     body = f"""{phead('Services', 'Nine ways <span class="accent">we help.</span>', 'We work with ministries, departments and agencies, companies, foundations, international and local NGOs and SMEs, designing tailor-made, innovative and sustainable solutions to organisational, programme, economic and social challenges.')}
@@ -410,9 +443,9 @@ def page_services():
 </section>
 {cta()}
 """
-    return (head("Services | FDSC: evaluation, M&E, gender, training and value chain consulting",
-                 "Programme management; research, monitoring, evaluation and learning; gender; organisational development; training; data; performance management; business and agribusiness value chains.",
-                 "services.html") + header("services.html") + body + footer())
+    return (head("Services | Evaluation, M&E, gender and training | FDSC",
+                 "Programme management, research and evaluation, M&E, gender, organisational development, training, data and agribusiness value chain consulting in Tanzania.",
+                 "services.html", crumb="Services") + header("services.html") + body + footer())
 
 
 def page_work():
@@ -468,19 +501,41 @@ def page_work():
 </section>
 {cta()}
 """
-    return (head("Our work | FDSC assignments across Tanzania and Zanzibar",
-                 "28 evaluations, baseline studies, M&E systems, training and technical assistance assignments for Solidaridad, Rikolto, HELVETAS, TNC, the Ministry of Finance and Planning and others.",
-                 "work.html") + header("work.html") + body + footer())
+    return (head(f"Our work | {s['assignments']} assignments across Tanzania | FDSC",
+                 f"{s['assignments']} evaluations, baselines, M&E systems, training and advisory assignments for Solidaridad, Rikolto, HELVETAS, TNC, the Ministry of Finance and others since {F['founded']}.",
+                 "work.html", crumb="Our work") + header("work.html") + body + footer())
+
+
+def faq_ld():
+    return {"@type": "FAQPage", "mainEntity": [
+        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in C.FAQ]}
+
+
+def faq_html():
+    def linkify(t):
+        t = e(t)
+        t = t.replace(F["email"], f'<a href="mailto:{F["email"]}">{F["email"]}</a>')
+        return t.replace(F["phone"], f'<a href="https://wa.me/{F["whatsapp"]}" target="_blank" rel="noopener">{F["phone"]}</a>')
+    return "".join(f'<details class="qa"><summary>{e(q)}</summary><p>{linkify(a)}</p></details>' for q, a in C.FAQ)
 
 
 def page_contact():
     opts = "".join(f"<option>{s['title'][0].upper() + s['title'][1:]}</option>" for s in C.SERVICES)
+
+    def field(fid, name, label, req=False, kind="input", attrs=""):
+        star = " *" if req else ""
+        r = " required" if req else ""
+        ctl = (f'<textarea id="{fid}" name="{name}"{r}{attrs}></textarea>' if kind == "textarea"
+               else f'<input id="{fid}" name="{name}"{r}{attrs}>')
+        err = f'<p class="err" id="{fid}-err"></p>' if req else ""
+        return f'<div class="field"><label for="{fid}">{label}{star}</label>{ctl}{err}</div>'
+
     body = f"""{phead('Contact', 'Let&rsquo;s build lasting <span class="accent">impact together.</span>', 'Tell us about your programme, evaluation or capacity need. We reply within two working days.')}
 <section class="section">
   <div class="wrap contact-grid">
     <div class="cinfo rv">
       <a href="tel:{F['phone_href']}"><span class="card__ic">{icon('phone')}</span><div><span>Call us</span><b>{F['phone']}</b></div></a>
-      <a href="https://wa.me/{F['whatsapp']}" target="_blank" rel="noopener"><img class="wa-ic" src="assets/img/whatsapp-112.png" width="44" height="44" alt=""><div><span>WhatsApp</span><b>Chat with us</b></div></a>
+      <a href="https://wa.me/{F['whatsapp']}" target="_blank" rel="noopener"><img class="wa-ic" src="assets/img/whatsapp-112.png" width="44" height="44" alt=""><div><span>WhatsApp (opens in a new tab)</span><b>Chat with us</b></div></a>
       <a href="mailto:{F['email']}"><span class="card__ic card__ic--soft">{icon('mail')}</span><div><span>Email</span><b>{F['email']}</b></div></a>
       <a href="mailto:{F['email_alt']}"><span class="card__ic card__ic--soft">{icon('mail')}</span><div><span>Alternative email</span><b>{F['email_alt']}</b></div></a>
       <a href="{F['maps']}" target="_blank" rel="noopener"><span class="card__ic card__ic--soft">{icon('pin')}</span><div><span>Office (opens Google Maps)</span><b>{F['office']}</b></div></a>
@@ -490,24 +545,77 @@ def page_contact():
       <h2>Send us an enquiry</h2>
       <p class="muted">Fields marked * are required.</p>
       <div class="row">
-        <div class="field"><label for="f-name">Your name *</label><input id="f-name" name="name" autocomplete="name" required></div>
-        <div class="field"><label for="f-org">Organisation</label><input id="f-org" name="org" autocomplete="organization"></div>
+        {field('f-name', 'name', 'Your name', True, attrs=' autocomplete="name"')}
+        {field('f-org', 'org', 'Organisation', attrs=' autocomplete="organization"')}
       </div>
       <div class="row">
-        <div class="field"><label for="f-email">Email *</label><input id="f-email" name="email" type="email" autocomplete="email" required></div>
-        <div class="field"><label for="f-phone">Phone</label><input id="f-phone" name="phone" type="tel" autocomplete="tel"></div>
+        {field('f-email', 'email', 'Email', True, attrs=' type="email" autocomplete="email" inputmode="email"')}
+        {field('f-phone', 'phone', 'Phone', attrs=' type="tel" autocomplete="tel"')}
       </div>
       <div class="field"><label for="f-svc">Service of interest</label><select id="f-svc" name="service"><option value="">Choose one (optional)</option>{opts}<option>Something else</option></select></div>
-      <div class="field"><label for="f-msg">How can we help? *</label><textarea id="f-msg" name="message" required></textarea></div>
+      {field('f-msg', 'message', 'How can we help?', True, kind='textarea')}
       <button class="btn btn--red" type="submit">Send enquiry{icon('arrow')}</button>
       <p class="form__note" id="form-note" aria-live="polite">This opens your email app with the message ready to send to {F['email']}.</p>
+      <div class="form__fb" id="form-fb" hidden>
+        <p>No email app opened? Copy your message and send it to <a href="mailto:{F['email']}">{F['email']}</a> from any email account, such as Gmail or Outlook on the web.</p>
+        <button class="btn btn--line" type="button" id="copy-msg">{icon('copy')}<span>Copy message</span></button>
+      </div>
     </form>
   </div>
 </section>
+<section class="section section--tint" id="faq" aria-labelledby="faq-h">
+  <div class="wrap faq">
+    <div class="rv">
+      <p class="eyebrow">FAQ</p>
+      <h2 class="h2" id="faq-h">Questions we <span class="accent">often hear.</span></h2>
+      <p class="lead">Can&rsquo;t see yours? Call <a class="ul" href="tel:{F['phone_href']}">{F['phone']}</a> or email <a class="ul" href="mailto:{F['email']}">{F['email']}</a>.</p>
+    </div>
+    <div class="faq__list rv">{faq_html()}</div>
+  </div>
+</section>
 """
-    return (head("Contact FDSC | Dar es Salaam, Tanzania",
+    return (head("Contact FDSC | Development consultants in Dar es Salaam",
                  f"Contact Frontline Development Services Consulting: {F['phone']}, {F['email']}. {F['office']}.",
-                 "contact.html") + header("contact.html") + body + footer())
+                 "contact.html", crumb="Contact", extra_ld=[faq_ld()]) + header("contact.html") + body + footer())
+
+
+def page_privacy():
+    va = ("<h2>Visitor statistics</h2><p>We use Vercel Web Analytics to count visits to each page. It does not use "
+          "cookies and does not identify individual visitors: we only see totals, such as how many people opened the "
+          "Services page this month.</p>") if ANALYTICS else ""
+    mail = f'<a href="mailto:{F["email"]}">{F["email"]}</a>'
+    body = f"""{phead('Privacy notice', 'Privacy <span class="accent">notice.</span>', 'How we handle the personal information you share with us through this website, by email, by phone or on WhatsApp.')}
+<section class="section">
+  <div class="wrap">
+    <div class="prose">
+      <p class="muted">Last updated {C.PRIVACY_UPDATED}</p>
+      <h2>Who we are</h2>
+      <p>This website belongs to {F['name']} (FDSC), {F['office']}, {F['po_box']}. You can reach us at {mail} or {F['phone']}.</p>
+      <h2>What this website collects</h2>
+      <p>Nothing that identifies you. The site sets no cookies, has no accounts and does not store anything you type. The enquiry form does not send anything by itself: it opens your own email app with your message ready, and nothing reaches us until you press send there.</p>
+      <p>If you arrive through a link with campaign tags (such as utm_source=linkedin), your browser keeps those tags until you close the tab and adds them to the end of your enquiry, so we can see which links bring people to us. You can delete that line before you send.</p>
+      {va}
+      <h2>What we receive when you contact us</h2>
+      <p>When you email, call or message us on WhatsApp, we receive what you choose to share: usually your name, organisation, email address, phone number and your message.</p>
+      <h2>How we use it</h2>
+      <p>To reply to you, to prepare a proposal and, if we work together, to deliver and manage the assignment. We do not sell your information or add you to marketing lists.</p>
+      <h2>Who we share it with</h2>
+      <p>Only the consultants who work with us on your request, the companies that run our email and phone services, and public authorities where the law requires it.</p>
+      <h2>How long we keep it</h2>
+      <p>Enquiries for as long as we need to answer and follow them up. Records of assignments for as long as our contracts and Tanzanian law require.</p>
+      <h2>Your rights</h2>
+      <p>Under Tanzania&rsquo;s Personal Data Protection Act, 2022, you can ask to see the personal information we hold about you, ask us to correct or delete it, and object to how we use it. Email {mail} or write to us at {F['po_box']}.</p>
+      <h2>Other websites</h2>
+      <p>Links to WhatsApp and Google Maps take you to services that have their own privacy policies.</p>
+      <h2>Changes to this notice</h2>
+      <p>If the way we handle information changes, we will update this page and the date at the top.</p>
+    </div>
+  </div>
+</section>
+"""
+    return (head("Privacy notice | FDSC",
+                 "How Frontline Development Services Consulting handles the personal information you share through this website, by email, by phone or on WhatsApp.",
+                 "privacy.html", crumb="Privacy notice") + header("privacy.html") + body + footer())
 
 
 def page_404():
@@ -517,8 +625,64 @@ def page_404():
   <p class="lead">Try the home page, or get in touch and we will point you in the right direction.</p>
   <div class="hero__btns" style="margin-top:28px"><a class="btn btn--red" href="/">Go to the home page{icon('arrow')}</a><a class="btn btn--line" href="/contact.html">Contact us</a></div></div>
 </section>"""
-    return (head("Page not found | FDSC", "This page could not be found.", "404.html", base=b).replace('<link rel="canonical"', '<meta name="robots" content="noindex"><link rel="canonical"')
+    return (head("Page not found | FDSC", "This page could not be found.", "404.html", base=b, index=False)
             + header("", base=b) + body + footer(base=b))
+
+
+# ---- llms.txt (plain-language summary for AI assistants, see llmstxt.org) -------------------
+def llms(full=False):
+    s, u = C.STATS, F["url"]
+    lc = lambda t: t if t[:2].isupper() else t[0].lower() + t[1:]   # keep acronyms such as M&E
+    rep = ", ".join(f"{c} ({n})" for c, n in C.repeat_clients())
+    L = [f"# {F['name']} (FDSC)", "",
+         f"> {C.INTRO} Based in Dar es Salaam. {s['assignments']} assignments for {s['clients']} clients, in "
+         f"{s['mainland']} of Tanzania's 26 mainland regions plus Unguja and Pemba (Zanzibar).", "",
+         f"- Legal name: {F['name']} (FDSC). {F['registration']}.",
+         f"- Office: {F['office']}. Postal address: {F['po_box']}.",
+         f"- Phone and WhatsApp: {F['phone']}",
+         f"- Email: {F['email']} (alternative: {F['email_alt']})",
+         f"- Office hours: {F['hours']}",
+         f"- Website: {u}/",
+         f"- Clients and partners: {', '.join(n for _, n in C.CLIENTS)}",
+         f"- Clients who have hired FDSC more than once (number of assignments): {rep}",
+         "- Programmes FDSC has evaluated or supported were funded by the European Union, Irish Aid and the "
+         "Belgian Development Cooperation (DGD), among others.", "",
+         "## Pages", "",
+         f"- [Home]({u}/): overview, sectors, services, approach and selected work",
+         f"- [About]({u}/about.html): history, vision, mission, core values, why clients choose FDSC, clients and partners",
+         f"- [Services]({u}/services.html): the nine services in detail, sectors and the four-step approach",
+         f"- [Our work]({u}/work.html): map of regions reached and the full record of all {s['assignments']} assignments, newest first",
+         f"- [Contact]({u}/contact.html): enquiry form, phone, WhatsApp, email, office address and FAQ",
+         f"- [Company profile (PDF)]({u}/{PDF}): 13-page A4 company profile", "",
+         "## Services", ""]
+    L += [f"- [{plain(x['title'])[0].upper() + plain(x['title'])[1:]}]({u}/services.html#{x['slug']}): {plain(x['short'])} "
+          f"Includes: {'; '.join(lc(plain(p)) if i else plain(p) for i, p in enumerate(x['points']))}." for x in C.SERVICES]
+    L += ["", "## Sectors", ""]
+    L += [f"- [{x['title']}]({u}/services.html): {plain(x['text'])}" for x in C.SECTORS]
+    L += ["", "## Selected work", ""]
+    L += [f"- [{plain(f['headline'])}]({u}/work.html): {plain(f['summary'])} Client: {f['a']['client']}. "
+          f"Where: {f['a']['where']}. When: {f['a']['period']}." for f in C.featured()]
+    L += ["", "## Frequently asked questions", ""]
+    L += [f"- [{q}]({u}/contact.html#faq): {a}" for q, a in C.FAQ]
+    if not full:
+        L += ["", "## Optional", "",
+              f"- [Full text and every assignment]({u}/llms-full.txt): about, vision, mission, values, approach and the complete assignment record",
+              f"- [Privacy notice]({u}/privacy.html)"]
+        return "\n".join(L) + "\n"
+    L += ["", "## About FDSC", ""] + [p + "\n" for p in map(plain, C.ABOUT)]
+    L += [f"Vision: {C.VISION}", "", f"Mission: {C.MISSION}", "", "Core values:", ""]
+    L += [f"- {t}: {d}" for t, d in C.VALUES]
+    L += ["", "Why clients choose FDSC:", ""] + [f"- {t}: {d}" for t, d in C.WHY]
+    L += ["", "Who FDSC works with: " + ", ".join(C.AUDIENCES) + ".", "", "## How FDSC works", ""]
+    L += [f"{i + 1}. {t}: {d}" for i, (t, d) in enumerate(C.APPROACH)]
+    L += ["", "## Where FDSC works", ""]
+    L += [f"- {z['name']} ({z['regions']}): {z['text']}" for z in C.ZONES]
+    L += ["", f"## Assignment record ({s['assignments']} assignments, newest first)", ""]
+    for a in C.ASSIGNMENTS:
+        eu = " EU-funded." if a.get("donor") == "EU" else ""
+        L.append(f"- {a['period'].replace(' - ', ' to ')} | {a['client']} | {C.TYPES[a['type']]}: {a['title']}. "
+                 f"Where: {a['where']}.{eu}")
+    return "\n".join(L) + "\n"
 
 
 # ---- brand files, sitemap -------------------------------------------------------------------
@@ -552,7 +716,11 @@ if __name__ == "__main__":
     write("services.html", page_services())
     write("work.html", page_work())
     write("contact.html", page_contact())
+    write("privacy.html", page_privacy())
     write("404.html", page_404())
-    urls = "".join(f"<url><loc>{F['url']}/{'' if h == 'index.html' else h}</loc></url>" for h, _ in NAV)
+    write("llms.txt", llms())
+    write("llms-full.txt", llms(full=True))
+    pages = [h for h, _ in NAV] + ["privacy.html"]
+    urls = "".join(f"<url><loc>{F['url']}/{'' if h == 'index.html' else h}</loc><lastmod>{TODAY.isoformat()}</lastmod></url>" for h in pages)
     write("sitemap.xml", f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
     write("robots.txt", f"User-agent: *\nAllow: /\nSitemap: {F['url']}/sitemap.xml\n")

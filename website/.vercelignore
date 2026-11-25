@@ -1,0 +1,5 @@
+_src
+__pycache__
+.vercel
+.DS_Store
+.env*
