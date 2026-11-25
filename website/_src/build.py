@@ -55,7 +55,7 @@ def head(title, desc, path, base="", crumb=None, extra_ld=None, index=True):
            "alternateName": "FDSC", "url": F["url"] + "/", "logo": F["url"] + "/assets/brand/fdsc-logo.svg",
            "image": F["url"] + "/assets/brand/og-image.jpg", "email": F["email"], "telephone": F["phone"],
            "foundingDate": str(F["founded"]), "description": C.INTRO, "slogan": C.HEADLINE,
-           "address": {"@type": "PostalAddress", "streetAddress": F["office_short"],
+           "address": {"@type": "PostalAddress", "streetAddress": F["street"],
                        "postOfficeBoxNumber": "105471", "addressLocality": "Dar es Salaam", "addressCountry": "TZ"},
            "openingHours": "Mo-Fr 08:30-17:00", "hasMap": F["maps"],
            "areaServed": [{"@type": "Country", "name": "Tanzania"}, {"@type": "Place", "name": "Zanzibar"}],

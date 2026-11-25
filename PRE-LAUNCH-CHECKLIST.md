@@ -126,7 +126,7 @@ Five-item navigation and one primary action ("Request a proposal") on every page
 |---|---|
 | Website with About, Services, Contact, FAQ and schema | ➕ FAQ and FAQ schema added; the rest was there |
 | `llms.txt` | ➕ `/llms.txt` (summary, key facts, links to every page and service, FAQ) and `/llms-full.txt` (full text and all 28 assignments). Both are generated from `content.py`, so they stay in step with the site |
-| Google Business Profile, Google Maps, Bing Places, Apple Business Connect | ⬜ FDSC to claim. Use exactly: Frontline Development Services Consulting Limited · Natai Plaza, Coca-Cola Road, Dar es Salaam (P.O. Box 105471) · +255 786 266 441 · www.fdsc.co.tz |
+| Google Business Profile, Google Maps, Bing Places, Apple Business Connect | ⬜ FDSC to claim. Use exactly: Frontline Development Services Consulting Limited · Victoria Noble Center, Plot No. 89, Block 45B, Kinondoni, Dar es Salaam (P.O. Box 105471) · +255 786 266 441 · www.fdsc.co.tz |
 | LinkedIn company page, Facebook | ⬜ FDSC: do they exist? Once they do, add the URLs (they go into the schema as `sameAs` and in the footer) |
 | Directories, reviews, press | ⬜ Optional: client case mentions, Tanzanian business directories, AfrEA or EES evaluator listings |
 | Wikipedia / Wikidata, YouTube, podcasts, Yelp, G2 etc. | N/A for now |

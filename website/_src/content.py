@@ -20,9 +20,10 @@ FIRM = {
     "phone_href": "+255786266441",
     "whatsapp": "255786266441",
     "po_box": "P.O. Box 105471, Dar es Salaam, Tanzania",
-    "office": "Natai Plaza, Coca-Cola Road, Dar es Salaam",          # as on the company business card
-    "office_short": "Natai Plaza, Coca-Cola Road",
-    "maps": "https://www.google.com/maps/search/?api=1&query=Natai+Plaza+Coca+Cola+Road+Dar+es+Salaam",
+    "office": "Victoria Noble Center, Plot No. 89, Block 45B, Kinondoni, Dar es Salaam",   # confirmed by FDSC, 25 Nov 2026
+    "office_short": "Victoria Noble Center, Kinondoni",
+    "street": "Victoria Noble Center, Plot No. 89, Block 45B, Kinondoni",
+    "maps": "https://www.google.com/maps/search/?api=1&query=Victoria+Noble+Center+Kinondoni+Dar+es+Salaam",
     "hours": "Monday to Friday, 08:30 - 17:00 EAT",
 }
 
@@ -339,8 +340,8 @@ FAQ = [
      "and technical assistance to government, development partners, foundations, NGOs and businesses."),
     ("Where do you work?",
      f"Across mainland Tanzania and Zanzibar. Since {FIRM['founded']} we have delivered assignments in "
-     f"{STATS['mainland']} of the 26 mainland regions, plus Unguja and Pemba. Our office is at Natai Plaza "
-     "on Coca-Cola Road, Dar es Salaam."),
+     f"{STATS['mainland']} of the 26 mainland regions, plus Unguja and Pemba. Our office is at the Victoria "
+     "Noble Center in Kinondoni, Dar es Salaam."),
     ("Who have you worked for?",
      f"{STATS['assignments']} assignments for {STATS['clients']} clients, including Solidaridad, Rikolto, HELVETAS, "
      "The Nature Conservancy, Trias, the Hanns Seidel Foundation, the Ministry of Finance and Planning and the "

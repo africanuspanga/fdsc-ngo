@@ -1,7 +1,7 @@
 # FDSC: brand, company profile and website (Draft 1)
 
 **Firm:** Frontline Development Services Consulting Limited (FDSC) · **Domain:** www.fdsc.co.tz
-**Office:** Natai Plaza, Coca-Cola Road · P.O. Box 105471, Dar es Salaam (as on the company business card)
+**Office:** Victoria Noble Center, Plot No. 89, Block 45B, Kinondoni · P.O. Box 105471, Dar es Salaam
 **Phone / WhatsApp:** +255 786 266 441 · **Email:** info@fdsc.co.tz, fdscltd@gmail.com
 
 ## What's here

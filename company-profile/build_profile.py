@@ -269,7 +269,7 @@ def p_back():
     <h2 class="h-hero">Let&rsquo;s build lasting impact together.</h2>
     <p class="lead on-dark">Tell us about your programme, evaluation or capacity need. We will reply within two working days with a first view of how we can help.</p>
     <div class="contact">
-      <div class="glass-d"><span class="label">{icon('pin')} Office</span><p>{F['office'].replace(', Dar es Salaam', '')}<br>{F['po_box']}</p></div>
+      <div class="glass-d"><span class="label">{icon('pin')} Office</span><p>{F['office'].replace(', Dar es Salaam', '').replace('Block 45B', 'Block&nbsp;45B').replace('No. 89', 'No.&nbsp;89')}<br>{F['po_box']}</p></div>
       <div class="glass-d"><span class="label">{icon('phone')} Phone / WhatsApp</span><p>{F['phone']}</p></div>
       <div class="glass-d"><span class="label">{icon('mail')} Email</span><p>{F['email']}<br>{F['email_alt']}</p></div>
       <div class="glass-d qrbox">{qr_svg(F['url'], dark='#962733')}<p><span class="label">{icon('globe')} Website</span>www.{F['domain']}</p></div>
